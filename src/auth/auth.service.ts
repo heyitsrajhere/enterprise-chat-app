@@ -32,7 +32,7 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto): Promise<ResponseInterface> {
     try {
-      const { email, password, organizationId } = registerDto;
+      const { email, username, password, organizationId } = registerDto;
       // Check if organization exists
       const organization = await this.organizationRepository.findOne({
         where: { id: organizationId },
@@ -40,14 +40,19 @@ export class AuthService {
       if (!organization) {
         throw new NotFoundException(errorMessages.organizationNotFound);
       }
-      // Check if user already exists
-      const user = await this.userRepository.findOne({
-        where: {
-          email,
-        },
+      const emailExists = await this.userRepository.findOne({
+        where: { email },
       });
-      if (user) {
-        throw new ConflictException(errorMessages.userAlreadyExists);
+      if (emailExists) {
+        throw new ConflictException(errorMessages.emailAlreadyExist);
+      }
+
+      // Check if username already exists
+      const usernameExists = await this.userRepository.findOne({
+        where: { username },
+      });
+      if (usernameExists) {
+        throw new ConflictException(errorMessages.usernameAlreadyExist);
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = this.userRepository.create({
@@ -85,6 +90,7 @@ export class AuthService {
       const payload = {
         sub: user.id,
         email: user.email,
+        userId: user.id,
         role: user.role,
         orgId: user.organization.id,
       };

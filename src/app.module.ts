@@ -6,12 +6,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { OrganizationsModule } from './organizations/organizations.module';
-import { User } from './config/entity';
-import { Organization } from './config/entity';
-import { ChatRoom } from './config/entity';
-import { Message } from './config/entity';
-import { MessageAttachment } from './config/entity/message-attachement.entity';
-import { MessageReaction } from './config/entity';
+import {
+  Notification,
+  User,
+  Organization,
+  ChatRoom,
+  Message,
+  MessageAttachment,
+  MessageReaction,
+} from './config/entity';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -32,6 +36,7 @@ import { MessageReaction } from './config/entity';
           Message,
           MessageAttachment,
           MessageReaction,
+          Notification,
         ],
         autoLoadEntities: true,
         synchronize: true,
@@ -40,6 +45,7 @@ import { MessageReaction } from './config/entity';
     AuthModule,
     UsersModule,
     OrganizationsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

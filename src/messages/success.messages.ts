@@ -3,4 +3,5 @@ export const successMessages = {
   userCreated: 'User created successfully',
   loginSuccess: 'Login successful',
   tokenRefreshed: 'Token refreshed successfully',
+  websocketConnected: 'WebSocket connection established!',
 };

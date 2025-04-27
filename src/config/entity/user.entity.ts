@@ -10,6 +10,7 @@ import { Organization } from './organization.entity';
 import { Message } from './message.entity';
 import { UserRole } from '../../common/enum';
 import { ChatRoom } from './chat-room.entity';
+import { Notification } from './notification.entity';
 
 @Entity('users')
 export class User {
@@ -45,4 +46,7 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   lastSeen: Date;
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }
