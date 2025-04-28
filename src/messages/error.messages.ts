@@ -22,4 +22,6 @@ export const errorMessages = {
   outsideOrganization:
     'You cannot send messages to users outside your organization.',
   invalidUser: 'invalid user or out of organization user',
+  chatRoomNotFound: 'Chat room not found',
+  userNotInOrganization: 'User not in organization',
 };

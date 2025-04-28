@@ -5,6 +5,8 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { User } from './user.entity';
@@ -33,9 +35,7 @@ export class ChatRoom {
   @Column({ nullable: true })
   isPrivate: boolean;
 
-  @ManyToOne(() => User, { nullable: true })
-  user1: User;
-
-  @ManyToOne(() => User, { nullable: true })
-  user2: User;
+  @ManyToMany(() => User, (user) => user.chatRooms)
+  @JoinTable()
+  users: User[];
 }

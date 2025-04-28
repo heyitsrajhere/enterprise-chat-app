@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { decrypt, encrypt } from 'src/common/utils';
 import {
@@ -8,8 +12,10 @@ import {
   MessageReaction,
   User,
 } from 'src/config/entity';
-import { errorMessages } from 'src/messages';
-import { Repository } from 'typeorm';
+import { errorMessages, successMessages } from 'src/messages';
+import { In, Repository } from 'typeorm';
+import { CreateChatRoomDto } from './dto';
+import { ResponseInterface } from 'src/common/Interface/response.interface';
 
 @Injectable()
 export class ChatService {
@@ -28,7 +34,7 @@ export class ChatService {
   /**
    * Saves a chat message to the database.
    * @param userId
-   * @param roomId 
+   * @param roomId
    * @param content
    * @returns the saved message or an appropriate result.
    */
@@ -238,6 +244,8 @@ export class ChatService {
    * @returns the update of the message's read status.
    */
   async markMessageAsRead(recipentId: string, messageId: string) {
+    try {
+    } catch (error) {}
     const message = await this.messageRepository.findOne({
       where: { id: messageId },
     });
@@ -270,5 +278,65 @@ export class ChatService {
       { id: userId },
       { isOnline: isOnline, lastSeen: new Date() },
     );
+  }
+
+  /**
+   * This will create chat room or group
+   * @param dto
+   * @param createdBy
+   * @returns users with chatroom
+   */
+  async createChatRoom(
+    dto: CreateChatRoomDto,
+    createdBy: User,
+  ): Promise<ResponseInterface> {
+    try {
+      const { name, userIds, isPrivate } = dto;
+      const users = await this.userRepository.find({
+        where: { id: In(userIds) },
+      });
+
+      if (users.length !== userIds.length) {
+        throw new Error(errorMessages.userNotFound);
+      }
+      const chatRoom = this.chatRoomRepository.create({
+        name,
+        createdBy,
+        isPrivate,
+        users,
+        organization: { id: (createdBy as any).orgId },
+      });
+
+      await this.chatRoomRepository.save(chatRoom);
+      return {
+        data: chatRoom,
+        message: successMessages.chatRoomCreated,
+        statusCode: 201,
+      };
+    } catch (error) {
+      console.error('Error while creating room:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * It will delete chat room from db by admin
+   * @param room_id
+   * @returns message and success code
+   */
+  async deleteChatRoom(room_id: string): Promise<ResponseInterface> {
+    try {
+      const room = await this.chatRoomRepository.findOne({
+        where: { id: room_id },
+      });
+      if (!room) {
+        throw new NotFoundException(errorMessages.chatRoomNotFound);
+      }
+      await this.chatRoomRepository.delete(room_id);
+      return { message: successMessages.chatRoomDeleted, statusCode: 201 };
+    } catch (error) {
+      console.error('error while deleting room', error.message);
+      throw new BadRequestException(error.message);
+    }
   }
 }

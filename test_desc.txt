@@ -1,0 +1,61 @@
+Progress Report for Authentication & WebSocket Features
+Registration and Testing:
+
+Registration functionality has been successfully implemented and tested.
+
+Login and Testing:
+
+Login functionality has been developed and thoroughly tested.
+
+Access Token Generation from Refresh Token:
+
+Functionality to generate an access token from a refresh token has been created and tested.
+
+Test Cases for Authentication:
+
+Test cases for the authentication service have been written. The command npm run test auth.service successfully runs all tests.
+
+WebSocket Connection and Disconnection (JWT Verification):
+
+WebSocket connection and disconnection processes have been implemented with JWT token verification. This has been tested successfully.
+
+Multiple User Connections on Socket:
+
+The feature to handle multiple user connections in the WebSocket has been completed and verified to work correctly.
+
+Sending Messages to Different Organizations:
+
+Sending messages to users from different organizations was initially tested but encountered errors.
+
+However, sending messages within the same organization is working as expected.
+
+Retrieving Previous Messages on Connection (Limit to 100 Messages):
+
+Upon connecting, users are able to retrieve their previous messages, with the limit set to 100 messages, as expected.
+
+Marking Messages as Read and Updating User:
+
+The functionality to mark messages as read and update the user status has been implemented and verified.
+
+Uploading File in Message Attachment:
+
+File upload functionality within messages has been implemented and is working correctly.
+
+Tracking and Displaying Online Status and Last Seen:
+
+The system correctly tracks and displays the online status and last seen timestamp for users.
+
+Displaying Who Read the Message:
+
+The feature to track and display who has read each message is functioning as intended.
+
+Note: This is working perfectly for individual users, but it remains to be completed for groups.
+
+Adding and Removing Reactions to Messages:
+
+The functionality to add and remove reactions to messages has been implemented successfully.
+
+group/ room created by admin 
+delete room by admin 
+
+Remove user from organization by admin

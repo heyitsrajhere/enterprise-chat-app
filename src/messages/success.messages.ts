@@ -4,4 +4,7 @@ export const successMessages = {
   loginSuccess: 'Login successful',
   tokenRefreshed: 'Token refreshed successfully',
   websocketConnected: 'WebSocket connection established!',
+  chatRoomCreated: 'Chat room created successfully',
+  chatRoomDeleted: 'Chat room deleted successfully',
+  userRemovedFromOrganization: 'User removed from organization.',
 };

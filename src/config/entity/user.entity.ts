@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { Message } from './message.entity';
@@ -37,6 +38,9 @@ export class User {
 
   @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.createdBy)
   createdRooms: ChatRoom[];
+
+  @ManyToMany(() => ChatRoom, (chatRoom) => chatRoom.users)
+  chatRooms: ChatRoom[];
 
   @OneToMany(() => Message, (message) => message.user)
   messages: Message[];

@@ -11,6 +11,7 @@ import {
   User,
 } from 'src/config/entity';
 import { CharController } from './chat.controller';
+import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 
 @Module({
   controllers: [CharController],
