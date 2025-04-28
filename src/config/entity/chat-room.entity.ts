@@ -5,12 +5,11 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
-  JoinTable,
-  ManyToMany,
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { User } from './user.entity';
 import { Message } from './message.entity';
+import { ChatRoomUser } from './chat-room-user.entity';
 
 @Entity('chat_rooms')
 export class ChatRoom {
@@ -35,7 +34,6 @@ export class ChatRoom {
   @Column({ nullable: true })
   isPrivate: boolean;
 
-  @ManyToMany(() => User, (user) => user.chatRooms)
-  @JoinTable()
-  users: User[];
+  @OneToMany(() => ChatRoomUser, (chatRoomUser) => chatRoomUser.chatRoom)
+  chatRoomUsers: ChatRoomUser[];
 }

@@ -5,3 +5,4 @@ export * from './message.entity';
 export * from './message-attachement.entity';
 export * from './message-reaction.entity';
 export * from './notification.entity';
+export * from './chat-room-user.entity';

@@ -24,4 +24,6 @@ export const errorMessages = {
   invalidUser: 'invalid user or out of organization user',
   chatRoomNotFound: 'Chat room not found',
   userNotInOrganization: 'User not in organization',
+  userNotInRoom: 'User is not a member of this chat room',
+  userAlreadyModerator: 'User is already a moderator',
 };

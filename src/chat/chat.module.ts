@@ -9,12 +9,12 @@ import {
   MessageAttachment,
   MessageReaction,
   User,
+  ChatRoomUser,
 } from 'src/config/entity';
-import { CharController } from './chat.controller';
-import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
+import { ChatController } from './chat.controller';
 
 @Module({
-  controllers: [CharController],
+  controllers: [ChatController],
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([
@@ -23,8 +23,10 @@ import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
       ChatRoom,
       MessageAttachment,
       MessageReaction,
+      ChatRoomUser,
     ]),
   ],
   providers: [ChatGateway, ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

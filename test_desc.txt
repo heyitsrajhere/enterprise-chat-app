@@ -1,15 +1,15 @@
 Progress Report for Authentication & WebSocket Features
 Registration and Testing:
 
-Registration functionality has been successfully implemented and tested.
+The registration functionality has been successfully implemented and tested.
 
 Login and Testing:
 
-Login functionality has been developed and thoroughly tested.
+The login functionality has been developed and thoroughly tested.
 
 Access Token Generation from Refresh Token:
 
-Functionality to generate an access token from a refresh token has been created and tested.
+The functionality to generate an access token from a refresh token has been created and tested.
 
 Test Cases for Authentication:
 
@@ -17,7 +17,7 @@ Test cases for the authentication service have been written. The command npm run
 
 WebSocket Connection and Disconnection (JWT Verification):
 
-WebSocket connection and disconnection processes have been implemented with JWT token verification. This has been tested successfully.
+WebSocket connection and disconnection processes, including JWT token verification, have been implemented and tested successfully.
 
 Multiple User Connections on Socket:
 
@@ -25,19 +25,19 @@ The feature to handle multiple user connections in the WebSocket has been comple
 
 Sending Messages to Different Organizations:
 
-Sending messages to users from different organizations was initially tested but encountered errors.
+Sending messages to users in different organizations was initially tested but encountered errors.
 
 However, sending messages within the same organization is working as expected.
 
 Retrieving Previous Messages on Connection (Limit to 100 Messages):
 
-Upon connecting, users are able to retrieve their previous messages, with the limit set to 100 messages, as expected.
+Upon connecting, users are able to retrieve their previous messages, with a limit of 100 messages, as expected.
 
-Marking Messages as Read and Updating User:
+Marking Messages as Read and Updating User Status:
 
-The functionality to mark messages as read and update the user status has been implemented and verified.
+The functionality to mark messages as read and update the user’s status has been implemented and verified.
 
-Uploading File in Message Attachment:
+Uploading Files in Message Attachments:
 
 File upload functionality within messages has been implemented and is working correctly.
 
@@ -49,13 +49,25 @@ Displaying Who Read the Message:
 
 The feature to track and display who has read each message is functioning as intended.
 
-Note: This is working perfectly for individual users, but it remains to be completed for groups.
+This is working perfectly for individual users, but it remains to be completed for groups.
 
 Adding and Removing Reactions to Messages:
 
 The functionality to add and remove reactions to messages has been implemented successfully.
 
-group/ room created by admin 
-delete room by admin 
+Admin Features:
+Group/Room Creation by Admin: Admins can create chat rooms or groups.
 
-Remove user from organization by admin
+Deleting Rooms by Admin: Admins can delete rooms.
+
+Removing Users from Organization by Admin: Admins can remove users from the organization.
+
+Assigning User as Moderator: Admins can assign users as moderators.
+____________________________________________________________________________________________________________________
+
+Remaining Features:
+Broadcast User Join/Leave in Group: Notifications for when users join or leave a group still need to be implemented.
+
+Moderate Deletion of Messages: The functionality for moderators to delete messages in groups needs to be finalized.
+
+Notification Module: The notification system still needs to be completed.

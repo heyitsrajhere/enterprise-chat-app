@@ -5,13 +5,13 @@ import {
   ManyToOne,
   CreateDateColumn,
   OneToMany,
-  ManyToMany,
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { Message } from './message.entity';
 import { UserRole } from '../../common/enum';
 import { ChatRoom } from './chat-room.entity';
 import { Notification } from './notification.entity';
+import { ChatRoomUser } from './chat-room-user.entity';
 
 @Entity('users')
 export class User {
@@ -39,8 +39,8 @@ export class User {
   @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.createdBy)
   createdRooms: ChatRoom[];
 
-  @ManyToMany(() => ChatRoom, (chatRoom) => chatRoom.users)
-  chatRooms: ChatRoom[];
+  @OneToMany(() => ChatRoomUser, (chatRoomUser) => chatRoomUser.user)
+  chatRoomUsers: ChatRoomUser[];
 
   @OneToMany(() => Message, (message) => message.user)
   messages: Message[];

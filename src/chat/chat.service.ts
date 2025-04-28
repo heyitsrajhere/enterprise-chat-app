@@ -11,11 +11,13 @@ import {
   MessageAttachment,
   MessageReaction,
   User,
+  ChatRoomUser,
 } from 'src/config/entity';
 import { errorMessages, successMessages } from 'src/messages';
 import { In, Repository } from 'typeorm';
 import { CreateChatRoomDto } from './dto';
 import { ResponseInterface } from 'src/common/Interface/response.interface';
+import { UserRole } from 'src/common/enum';
 
 @Injectable()
 export class ChatService {
@@ -29,6 +31,8 @@ export class ChatService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(MessageReaction)
     private readonly reactionRepository: Repository<MessageReaction>,
+    @InjectRepository(ChatRoomUser)
+    private readonly chatRoomUserRepository: Repository<ChatRoomUser>,
   ) {}
 
   /**
@@ -292,29 +296,54 @@ export class ChatService {
   ): Promise<ResponseInterface> {
     try {
       const { name, userIds, isPrivate } = dto;
+
       const users = await this.userRepository.find({
         where: { id: In(userIds) },
+        relations: ['organization'],
       });
 
       if (users.length !== userIds.length) {
         throw new Error(errorMessages.userNotFound);
       }
+
       const chatRoom = this.chatRoomRepository.create({
         name,
         createdBy,
         isPrivate,
-        users,
-        organization: { id: (createdBy as any).orgId },
+        organization: (createdBy as any).orgId,
       });
 
-      await this.chatRoomRepository.save(chatRoom);
+      // Save the chat room first
+      const savedChatRoom = await this.chatRoomRepository.save(chatRoom);
+
+      // Create ChatRoomUser entries for all users
+      const chatRoomUsers = users.map((user) => {
+        const chatRoomUser = this.chatRoomUserRepository.create({
+          user: { id: user.id },
+          chatRoom: { id: savedChatRoom.id },
+          role: user.id === createdBy.id ? UserRole.MODERATOR : UserRole.USER,
+        });
+        return chatRoomUser;
+      });
+
+      await this.chatRoomUserRepository.save(chatRoomUsers);
+
+      const completeChatRoom = await this.chatRoomRepository.findOne({
+        where: { id: savedChatRoom.id },
+        relations: ['chatRoomUsers', 'chatRoomUsers.user'],
+      });
+
       return {
-        data: chatRoom,
+        data: completeChatRoom,
         message: successMessages.chatRoomCreated,
         statusCode: 201,
       };
     } catch (error) {
-      console.error('Error while creating room:', error.message);
+      console.error('Detailed error while creating room:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       throw new BadRequestException(error.message);
     }
   }
@@ -332,10 +361,86 @@ export class ChatService {
       if (!room) {
         throw new NotFoundException(errorMessages.chatRoomNotFound);
       }
+
+      // First delete all ChatRoomUser entries for this room
+      await this.chatRoomUserRepository.delete({
+        chatRoom: { id: room_id },
+      });
+
+      // Then delete the chat room
       await this.chatRoomRepository.delete(room_id);
       return { message: successMessages.chatRoomDeleted, statusCode: 201 };
     } catch (error) {
       console.error('error while deleting room', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Assigns moderator role to a user in a chat room
+   * @param userId The ID of the user to assign as moderator
+   * @param roomId The ID of the chat room
+   * @returns Success message and status code
+   */
+  async assignModerator(
+    userId: string,
+    roomId: string,
+  ): Promise<ResponseInterface> {
+    try {
+      const [user, chatRoom] = await Promise.all([
+        this.userRepository.findOne({
+          where: { id: userId },
+          relations: { organization: true },
+        }),
+        this.chatRoomRepository.findOne({
+          where: { id: roomId },
+          relations: {
+            chatRoomUsers: { user: true },
+            organization: true,
+          },
+        }),
+      ]);
+
+      if (!user || !chatRoom) {
+        throw new NotFoundException(errorMessages.invalidUserOrRoom);
+      }
+
+      const isUserInRoom = chatRoom.chatRoomUsers.some(
+        (u) => u.user.id === userId,
+      );
+
+      if (!isUserInRoom) {
+        throw new BadRequestException(errorMessages.userNotInRoom);
+      }
+
+      let chatRoomUser = await this.chatRoomUserRepository.findOne({
+        where: {
+          user: { id: userId },
+          chatRoom: { id: roomId },
+        },
+      });
+
+      if (!chatRoomUser) {
+        chatRoomUser = this.chatRoomUserRepository.create({
+          user: { id: userId },
+          chatRoom: { id: roomId },
+          role: UserRole.USER,
+        });
+      }
+
+      if (chatRoomUser.role === UserRole.MODERATOR) {
+        throw new BadRequestException(errorMessages.userAlreadyModerator);
+      }
+
+      chatRoomUser.role = UserRole.MODERATOR;
+      await this.chatRoomUserRepository.save(chatRoomUser);
+
+      return {
+        message: successMessages.moderatorAssigned,
+        statusCode: 200,
+      };
+    } catch (error) {
+      console.error('Error while assigning moderator:', error.message);
       throw new BadRequestException(error.message);
     }
   }
