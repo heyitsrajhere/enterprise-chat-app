@@ -26,7 +26,7 @@ export class SocketAuthGuard implements CanActivate {
       const decoded = jwt.verify(
         jwtToken,
         this.configService.get<string>('JWT_SECRET'),
-      ) as { userId: string; email: string };
+      ) as AuthenticatedSocket['data']['user'];
 
       if (!decoded?.userId) {
         client.emit('error_event', {

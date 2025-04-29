@@ -248,12 +248,9 @@ export class ChatService {
    * @returns the update of the message's read status.
    */
   async markMessageAsRead(recipentId: string, messageId: string) {
-    try {
-    } catch (error) {}
     const message = await this.messageRepository.findOne({
       where: { id: messageId },
     });
-    console.log(message);
     if (!message) {
       throw new Error(errorMessages.messageNotFound);
     }
@@ -266,7 +263,6 @@ export class ChatService {
     if (alreadyRead) {
       return;
     }
-    console.log(recipentId, new Date());
     message.readBy.push({ userId: recipentId, readAt: new Date() });
     await this.messageRepository.save(message);
   }
@@ -292,10 +288,17 @@ export class ChatService {
    */
   async createChatRoom(
     dto: CreateChatRoomDto,
-    createdBy: User,
+    createdByPayload: { userId: string },
   ): Promise<ResponseInterface> {
     try {
       const { name, userIds, isPrivate } = dto;
+      const createdBy = await this.userRepository.findOne({
+        where: { id: createdByPayload.userId },
+        relations: ['organization'],
+      });
+      if (!createdBy) {
+        throw new Error(errorMessages.userNotFound);
+      }
 
       const users = await this.userRepository.find({
         where: { id: In(userIds) },
@@ -310,13 +313,11 @@ export class ChatService {
         name,
         createdBy,
         isPrivate,
-        organization: (createdBy as any).orgId,
+        organization: createdBy.organization,
       });
 
-      // Save the chat room first
       const savedChatRoom = await this.chatRoomRepository.save(chatRoom);
 
-      // Create ChatRoomUser entries for all users
       const chatRoomUsers = users.map((user) => {
         const chatRoomUser = this.chatRoomUserRepository.create({
           user: { id: user.id },
@@ -347,7 +348,6 @@ export class ChatService {
       throw new BadRequestException(error.message);
     }
   }
-
   /**
    * It will delete chat room from db by admin
    * @param room_id
@@ -441,6 +441,151 @@ export class ChatService {
       };
     } catch (error) {
       console.error('Error while assigning moderator:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Joins a chat room.
+   * @param userId
+   * @param roomId
+   * @returns the updated chat room.
+   */
+  async joinRoom(userId: string, roomId: string) {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['chatRoomUsers', 'chatRoomUsers.user'],
+    });
+    if (!chatRoom) {
+      throw new Error('Chat room does not exist.');
+    }
+
+    const alreadyInRoom = chatRoom.chatRoomUsers.some(
+      (cru) => cru.user.id === userId,
+    );
+    if (alreadyInRoom) {
+      throw new Error('User is already in the room.');
+    }
+
+    const chatRoomUser = this.chatRoomUserRepository.create({
+      user: { id: userId },
+      chatRoom: { id: roomId },
+      role: UserRole.USER,
+    });
+    await this.chatRoomUserRepository.save(chatRoomUser);
+
+    return {
+      message: 'User added to room successfully.',
+      roomId,
+      userId,
+    };
+  }
+
+  /**
+   * Leaves a chat room.
+   * @param userId
+   * @param roomId
+   * @returns the updated chat room.
+   */
+  async leaveRoom(userId: string, roomId: string) {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['chatRoomUsers', 'chatRoomUsers.user'],
+    });
+    if (!chatRoom) {
+      throw new NotFoundException(errorMessages.chatRoomNotFound);
+    }
+
+    const chatRoomUser = chatRoom.chatRoomUsers.find(
+      (cru) => cru.user.id === userId,
+    );
+    if (!chatRoomUser) {
+      throw new NotFoundException(errorMessages.userNotInRoom);
+    }
+
+    await this.chatRoomUserRepository.delete({
+      user: { id: userId },
+      chatRoom: { id: roomId },
+    });
+
+    return {
+      message: successMessages.userLeftRoom,
+      roomId,
+      userId,
+    };
+  }
+
+  /**
+   * Saves a message to a group chat.
+   * @param userId
+   * @param roomId
+   * @param content
+   * @returns the saved message.
+   */
+  async saveMessageToGroup(userId: string, roomId: string, content: string) {
+    const [user, chatRoom] = await Promise.all([
+      this.userRepository.findOneBy({ id: userId }),
+      this.chatRoomRepository.findOneBy({ id: roomId }),
+    ]);
+    if (!user || !chatRoom) {
+      throw new Error(errorMessages.invalidUserOrRoom);
+    }
+
+    const isMember = await this.chatRoomUserRepository.findOne({
+      where: { user: { id: userId }, chatRoom: { id: roomId } },
+    });
+    if (!isMember) {
+      throw new Error(errorMessages.userNotInRoom);
+    }
+    const encryptContent = encrypt(content);
+    const message = this.messageRepository.create({
+      user,
+      chatRoom,
+      content: encryptContent,
+      is_encrypted: true,
+      readBy: [],
+    });
+
+    const savedMessage = await this.messageRepository.save(message);
+
+    return savedMessage;
+  }
+
+  /**
+   * Marks a message as read by a user in a group chat.
+   * @param userId
+   * @param messageId
+   * @returns the updated message.
+   */
+  async markMessageAsReadInGroup(userId: string, messageId: string) {
+    try {
+      const message = await this.messageRepository.findOne({
+        where: { id: messageId },
+        relations: ['chatRoom'],
+      });
+      if (!message) {
+        throw new Error(errorMessages.messageNotFound);
+      }
+
+      if (!message.readBy) {
+        message.readBy = [];
+      }
+      const alreadyRead = message.readBy.some(
+        (entry) => entry.userId === userId,
+      );
+      if (!alreadyRead) {
+        message.readBy.push({ userId, readAt: new Date() });
+        await this.messageRepository.save(message);
+      }
+
+      const decryptedMessage = {
+        ...message,
+        content: decrypt(message.content),
+      };
+
+      return decryptedMessage;
+    } catch (error) {
+      console.error('Error while marking message as read:', error.message);
       throw new BadRequestException(error.message);
     }
   }

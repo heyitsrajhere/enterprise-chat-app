@@ -1,5 +1,3 @@
-import { access } from 'fs';
-
 export const errorMessages = {
   organizationNotFound: 'Organization not found',
   userNotFound: 'User not found',
@@ -26,4 +24,6 @@ export const errorMessages = {
   userNotInOrganization: 'User not in organization',
   userNotInRoom: 'User is not a member of this chat room',
   userAlreadyModerator: 'User is already a moderator',
+  notPermission: 'You are not authorized to perform this action',
+  messageAlreadyRead: 'Message already read',
 };

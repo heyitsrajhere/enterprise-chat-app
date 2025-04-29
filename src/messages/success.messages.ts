@@ -8,4 +8,5 @@ export const successMessages = {
   chatRoomDeleted: 'Chat room deleted successfully',
   userRemovedFromOrganization: 'User removed from organization.',
   moderatorAssigned: 'Moderator role assigned successfully',
+  userLeftRoom: 'User left the room successfully',
 };
