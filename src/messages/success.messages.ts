@@ -9,4 +9,6 @@ export const successMessages = {
   userRemovedFromOrganization: 'User removed from organization.',
   moderatorAssigned: 'Moderator role assigned successfully',
   userLeftRoom: 'User left the room successfully',
+  notificationsFetched: 'Notifications fetched successfully',
+  notificationMarkedAsRead: 'Notification marked as read successfully',
 };

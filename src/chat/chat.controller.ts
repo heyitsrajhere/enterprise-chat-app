@@ -7,23 +7,34 @@ import {
   Query,
   Body,
   Put,
+  Req,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard, RoleGuard } from 'src/common/guards';
-import { UploadFileParamDto, AssignModeratorDto } from './dto';
+import {
+  UploadFileParamDto,
+  AssignModeratorDto,
+  CreateChatRoomDto,
+} from './dto';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
+  ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
 import { UserRole } from 'src/common/enum';
 import { Roles } from 'src/common/decorators';
-
+import { successMessages } from 'src/messages';
+import { User } from 'src/config/entity';
+import { ApiTags } from '@nestjs/swagger';
+@ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
@@ -66,6 +77,65 @@ export class ChatController {
     @Query() param: UploadFileParamDto,
   ) {
     return this.chatService.saveAttachement(file, param.messageId);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new chat room' })
+  @ApiBody({
+    type: CreateChatRoomDto,
+    description: 'Data required to create a new chat room',
+  })
+  @ApiResponse({
+    status: 201,
+    description: successMessages.chatRoomCreated,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. User does not have the required permissions.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized. User is not authenticated.',
+  })
+  @Post('room')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(UserRole.ADMIN)
+  async createRoom(
+    @Body() body: CreateChatRoomDto,
+    @Req() req: Request & { user: User },
+  ) {
+    return await this.chatService.createChatRoom(body, {
+      userId: req.user.id,
+    });
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a chat room' })
+  @ApiParam({
+    name: 'room_id',
+    description: 'The ID of the chat room to delete',
+  })
+  @ApiResponse({
+    status: 201,
+    description: successMessages.chatRoomDeleted,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. User does not have the required permissions.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized. User is not authenticated.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Not Found. Chat room not found.',
+  })
+  @Delete(':room_id')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
+  async deleteChatRoom(@Param('room_id') roomId: string) {
+    return await this.chatService.deleteChatRoom(roomId);
   }
 
   @ApiBearerAuth()

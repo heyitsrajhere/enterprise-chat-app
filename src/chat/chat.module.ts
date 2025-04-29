@@ -10,9 +10,10 @@ import {
   MessageReaction,
   User,
   ChatRoomUser,
+  Notification,
 } from 'src/config/entity';
 import { ChatController } from './chat.controller';
-
+import { NotificationService } from 'src/notification/notification.service';
 @Module({
   controllers: [ChatController],
   imports: [
@@ -24,9 +25,10 @@ import { ChatController } from './chat.controller';
       MessageAttachment,
       MessageReaction,
       ChatRoomUser,
+      Notification,
     ]),
   ],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, NotificationService],
   exports: [ChatService],
 })
 export class ChatModule {}

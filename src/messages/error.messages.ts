@@ -26,4 +26,5 @@ export const errorMessages = {
   userAlreadyModerator: 'User is already a moderator',
   notPermission: 'You are not authorized to perform this action',
   messageAlreadyRead: 'Message already read',
+  notificationNotFound: 'Notification not found',
 };

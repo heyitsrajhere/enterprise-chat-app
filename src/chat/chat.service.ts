@@ -17,8 +17,8 @@ import { errorMessages, successMessages } from 'src/messages';
 import { In, Repository } from 'typeorm';
 import { CreateChatRoomDto } from './dto';
 import { ResponseInterface } from 'src/common/Interface/response.interface';
-import { UserRole } from 'src/common/enum';
-
+import { NotificationType, UserRole } from 'src/common/enum';
+import { NotificationService } from 'src/notification/notification.service';
 @Injectable()
 export class ChatService {
   constructor(
@@ -33,6 +33,7 @@ export class ChatService {
     private readonly reactionRepository: Repository<MessageReaction>,
     @InjectRepository(ChatRoomUser)
     private readonly chatRoomUserRepository: Repository<ChatRoomUser>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -317,7 +318,16 @@ export class ChatService {
       });
 
       const savedChatRoom = await this.chatRoomRepository.save(chatRoom);
-
+      for (const userId of dto.userIds) {
+        if (userId !== createdBy.id) {
+          await this.notificationService.createNotification(
+            userId,
+            NotificationType.NEW_ROOM,
+            'Added to New Room',
+            { roomId: savedChatRoom.id },
+          );
+        }
+      }
       const chatRoomUsers = users.map((user) => {
         const chatRoomUser = this.chatRoomUserRepository.create({
           user: { id: user.id },
@@ -434,7 +444,12 @@ export class ChatService {
 
       chatRoomUser.role = UserRole.MODERATOR;
       await this.chatRoomUserRepository.save(chatRoomUser);
-
+      await this.notificationService.createNotification(
+        userId,
+        NotificationType.ROLE_CHANGED,
+        'Role Updated',
+        { roomId: chatRoom.id },
+      );
       return {
         message: successMessages.moderatorAssigned,
         statusCode: 200,
@@ -588,5 +603,74 @@ export class ChatService {
       console.error('Error while marking message as read:', error.message);
       throw new BadRequestException(error.message);
     }
+  }
+
+  /**
+   * Deletes a message from a group chat.
+   * @param moderatorId
+   * @param messageId
+   * @param roomId
+   * @returns Success message and status code
+   */
+  async deleteGroupMessage(
+    moderatorId: string,
+    messageId: string,
+    roomId: string,
+  ) {
+    try {
+      const message = await this.messageRepository.findOne({
+        where: { id: messageId, chatRoom: { id: roomId } },
+        relations: [
+          'chatRoom',
+          'chatRoom.chatRoomUsers',
+          'chatRoom.chatRoomUsers.user',
+        ],
+      });
+
+      if (!message) {
+        throw new Error(errorMessages.messageNotFound);
+      }
+
+      const moderatorInRoom = message.chatRoom.chatRoomUsers.find(
+        (cru) =>
+          cru.user.id === moderatorId &&
+          (cru.role === UserRole.MODERATOR || cru.role === UserRole.ADMIN),
+      );
+
+      if (!moderatorInRoom) {
+        throw new Error(errorMessages.notPermission);
+      }
+
+      await this.messageRepository.remove(message);
+
+      return {
+        success: true,
+        messageId,
+        roomId,
+        deletedBy: moderatorId,
+      };
+    } catch (error) {
+      console.error('Error while deleting message:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Retrieves all users in a chat room.
+   * @param roomId
+   * @returns an array of users.
+   */
+  async getRoomUsers(roomId: string) {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['chatRoomUsers', 'chatRoomUsers.user'],
+    });
+
+    if (!chatRoom) {
+      throw new Error(errorMessages.chatRoomNotFound);
+    }
+
+    // Extract users from chatRoomUsers
+    return chatRoom.chatRoomUsers.map((cru) => cru.user);
   }
 }

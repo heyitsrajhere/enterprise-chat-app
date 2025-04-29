@@ -15,6 +15,8 @@ import { ChatService } from './chat.service';
 import { decrypt } from 'src/common/utils';
 import { ActionType, AuthenticatedSocket, UserRole } from 'src/common/enum';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/common/enum';
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -33,6 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private configService: ConfigService,
     private chatService: ChatService,
+    private notificationService: NotificationService,
   ) {}
 
   async handleConnection(@ConnectedSocket() socket: AuthenticatedSocket) {
@@ -348,6 +351,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  private isUserInRoom(userId: string, roomId: string): boolean {
+    const socket = this.userSocketMap.get(userId);
+    if (!socket) return false;
+
+    const socketInstance = this.server.sockets.sockets.get(socket);
+    if (!socketInstance) return false;
+
+    return socketInstance.rooms.has(roomId);
+  }
+
   @SubscribeMessage('send_room_message')
   async handleSendRoomMessage(
     @MessageBody() data: { roomId: string; message: string },
@@ -369,7 +382,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomId: data.roomId,
         createdAt: savedMessage.created_at,
       });
+      const roomUsers = await this.chatService.getRoomUsers(data.roomId);
+      const otherUsers = roomUsers.filter(
+        (user) => user.id !== socket.data.user.userId,
+      );
 
+      // Create notifications for users not in the active room
+      for (const user of otherUsers) {
+        if (!this.isUserInRoom(user.id, data.roomId)) {
+          await this.notificationService.createNotification(
+            user.id,
+            NotificationType.NEW_MESSAGE,
+            'New Message',
+            {
+              roomId: data.roomId,
+              messageId: savedMessage.id,
+              senderId: socket.data.user.userId,
+            },
+          );
+        }
+      }
       socket.emit('room_message_sent', {
         messageId: savedMessage.id,
         roomId: data.roomId,
@@ -402,6 +434,53 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       socket.emit('error_event', {
         type: 'READ_MESSAGE_ERROR',
+        message: error.message,
+      });
+    }
+  }
+
+  @SubscribeMessage('delete_group_message')
+  async handleDeleteGroupMessage(
+    @MessageBody() data: { messageId: string; roomId: string },
+    @ConnectedSocket() socket: AuthenticatedSocket,
+  ) {
+    try {
+      const user = socket.data.user;
+
+      const result = await this.chatService.deleteGroupMessage(
+        user.userId,
+        data.messageId,
+        data.roomId,
+      );
+
+      this.server.to(data.roomId).emit('message_deleted', {
+        messageId: data.messageId,
+        roomId: data.roomId,
+        deletedBy: user.userId,
+      });
+
+      socket.emit('delete_message_success', result);
+    } catch (error) {
+      socket.emit('error_event', {
+        type: 'DELETE_MESSAGE_ERROR',
+        message: error.message,
+      });
+    }
+  }
+
+  @SubscribeMessage('mark_notification_read')
+  async handleMarkNotificationRead(
+    @MessageBody() data: { notificationId: string },
+    @ConnectedSocket() socket: AuthenticatedSocket,
+  ) {
+    try {
+      await this.notificationService.markAsRead(
+        socket.data.user.userId,
+        data.notificationId,
+      );
+    } catch (error) {
+      socket.emit('error_event', {
+        type: 'NOTIFICATION_ERROR',
         message: error.message,
       });
     }

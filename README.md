@@ -1,73 +1,218 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Enterprise Chat Application
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A real-time chat application built with NestJS, TypeScript, and WebSocket for enterprise-level communication.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- 🔐 **Secure Authentication**
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+  - JWT-based authentication
+  - Role-based access control (Admin, Moderator, User)
+  - Organization-based user management
+
+- 💬 **Real-time Messaging**
+
+  - Private and group chats
+  - Message encryption
+  - Read receipts
+  - Message reactions
+  - Typing indicators
+
+- 🏢 **Organization Management**
+
+  - Multi-organization support
+  - Organization-specific chat rooms
+  - User role management
+
+- 🔔 **Notifications**
+
+  - Real-time notifications
+  - Notification history
+  - Read/unread status
+
+- 🛠️ **Moderation Tools**
+  - Message deletion (Moderator/Admin)
+  - Room management
+  - User management
+
+## Tech Stack
+
+- **Backend**
+
+  - NestJS
+  - TypeScript
+  - TypeORM
+  - PostgreSQL
+  - Socket.IO
+  - JWT Authentication
+
+- **Security**
+  - Message encryption
+  - Rate limiting
+  - Input validation
+  - Role-based access control
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL
+- Docker (optional)
 
 ## Installation
 
-```bash
-$ npm install
-```
-
-## Running the app
+1. **Clone the repository**
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone https://github.com/your-username/enterprise-chat-app.git
+cd enterprise-chat-app
 ```
 
-## Test
+2. **Install dependencies**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Support
+3. **Environment Setup**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+cp .env.example .env
+```
 
-## Stay in touch
+Edit `.env` with your configuration:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_NAME=chat-app
+JWT_SECRET=your_jwt_secret
+ENCRYPTION_SECRET_KEY=your_encryption_key
+```
 
-## License
+4. **Database Setup**
 
-Nest is [MIT licensed](LICENSE).
+```bash
+# Using Docker
+docker-compose up -d
+
+# Or manually
+# Create a PostgreSQL database named 'chat-app'
+```
+
+5. **Run the application**
+
+```bash
+# Development
+npm run start:dev
+
+# Production
+npm run build
+npm run start:prod
+```
+
+## Docker Deployment
+
+1. **Build and start containers**
+
+```bash
+docker-compose up --build
+```
+
+2. **Access the application**
+
+- API: http://localhost:3000
+- WebSocket: ws://localhost:3000
+
+## API Documentation
+
+### WebSocket Events
+
+For detailed WebSocket event documentation, see [WEBSOCKET_EVENTS.md](WEBSOCKET_EVENTS.md).
+
+### REST API Endpoints
+
+#### Authentication
+
+- `POST /auth/login` - User login
+- `POST /auth/refresh` - Refresh token
+- `POST /auth/logout` - User logout
+
+#### Users
+
+- `GET /users` - Get all users
+- `GET /users/:id` - Get user by ID
+- `PUT /users/:id` - Update user
+- `DELETE /users/:id` - Delete user
+
+#### Chat Rooms
+
+- `POST /rooms` - Create room (Admin only)
+- `GET /rooms` - Get all rooms
+- `GET /rooms/:id` - Get room by ID
+- `DELETE /rooms/:id` - Delete room (Admin only)
+
+#### Messages
+
+- `GET /messages` - Get messages
+- `GET /messages/:id` - Get message by ID
+- `DELETE /messages/:id` - Delete message (Moderator/Admin)
+
+## Development
+
+### Project Structure
+
+```
+src/
+├── auth/           # Authentication module
+├── chat/           # Chat module
+├── config/         # Configuration and entities
+├── notification/   # Notification module
+├── user/           # User module
+└── common/         # Common utilities and guards
+```
+
+### Code Style
+
+- Follow NestJS best practices
+- Use TypeScript strict mode
+- Follow SOLID principles
+- Write unit tests for new features
+
+### Testing
+
+```bash
+# Unit tests
+npm run test auth.service
+
+```
+
+## Security
+
+- All messages are encrypted before storage
+- JWT tokens are used for authentication
+- Rate limiting is implemented
+- Input validation is enforced
+- Role-based access control is implemented
+
+## Quick Start Guide
+
+1. **Database Setup**
+
+   - The application uses TypeORM with `synchronize: true`
+   - Tables will be automatically created on first run
+   - No manual database schema setup required
+
+2. **Initial Setup**
+
+   - Create a dummy organization with a name
+   - Register a new user with the organization ID
+   - Login with the created credentials
+   - Update user role to admin in the database if needed
+
+3. **Development Notes**
+   - Database schema is automatically synchronized
+   - All tables are created on application startup
+   - No need for manual migrations in development

@@ -120,7 +120,7 @@ export class AuthService {
         statusCode: 200,
       };
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new BadRequestException(error.message);
     }
   }
 
